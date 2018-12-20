@@ -8,6 +8,7 @@ require_relative "configuration"
 require_relative "adapter"
 require_relative "fetcher"
 require_relative "synchronizer"
+require_relative "multiio"
 
 Dir["#{File.expand_path __dir__}/adapters/**/*.rb"].each { |f| require f }
 Dir["#{File.expand_path __dir__}/storage/**/*.rb"].each { |f| require f }
@@ -53,7 +54,11 @@ module CurrencyRate
 
   def self.logger
     return @logger if @logger
-    @logger = Logger.new(configuration.logger[:device])
+    if configuration.logger[:device].nil?
+      @logger = Logger.new($stdout)
+    else
+      @logger = Logger.new MultiIO.new(STDOUT, configuration.logger[:device])
+    end
     @logger.progname = "CurrencyRate"
     @logger.level = configuration.logger[:level]
     @logger.formatter = configuration.logger[:formatter] if configuration.logger[:formatter]
